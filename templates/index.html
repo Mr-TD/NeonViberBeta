@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Neon Viper 2026</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Outfit:wght@400;700;900&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div id="boot-screen" class="nokia-boot active">
+        <h1 class="nokia-text">NEON VIPER</h1>
+        <div class="connecting-hands"></div>
+    </div>
+
+    <!-- Login Modal -->
+    <div id="login-modal" class="modal hidden">
+        <div class="modal-content glass-panel" style="width: 450px; text-align: center;">
+            <h2>Select Profile</h2>
+            
+            <div id="profiles-list" class="profiles-list">
+                <!-- Populated by JS -->
+            </div>
+            
+            <div style="margin: 20px 0; border-top: 1px solid var(--glass-border);"></div>
+            
+            <p style="margin-bottom: 15px; color: #aaa; font-size: 0.9rem;">Or Create New Profile</p>
+            <div style="display: flex; gap: 10px;">
+                <input type="text" id="username-input" placeholder="New Username" class="input-field" maxlength="15" autocomplete="off" />
+                <button id="btn-login" class="btn primary">Start</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="player-profile" class="player-profile hidden">
+        <span>Player: <span id="display-username" style="color: #fff;"></span></span>
+        <a id="btn-logout">Logout</a>
+    </div>
+
+    <div id="game-container" class="hidden">
+        <div class="score-panel">
+            <div class="score-box">
+                <span class="label">SCORE</span>
+                <span id="score">0</span>
+            </div>
+            <div class="high-score-box">
+                <span class="label">BEST</span>
+                <span id="high-score">0</span>
+            </div>
+            <div class="level-box">
+                <span class="label">Lvl</span>
+                <span id="level">1</span>
+            </div>
+            <div class="gems-box">
+                <span class="label">💎 GEMS</span>
+                <span id="gems">0</span>
+            </div>
+        </div>
+
+        <div class="canvas-wrapper">
+            <canvas id="gameCanvas" width="800" height="600"></canvas>
+
+            <div class="hud-bottom">
+                <div id="power-up-status" class="hidden">
+                    <span id="power-up-icon">⚡</span>
+                    <div class="progress-bar"><div id="power-up-progress"></div></div>
+                </div>
+                <div id="combo-display" class="hidden">
+                    <span class="combo-text">COMBO <span id="combo-multiplier">x2</span>!</span>
+                </div>
+            </div>
+
+            <div id="overlay" class="overlay hidden">
+                <h2 id="overlay-title">Game Over</h2>
+                <p id="overlay-points">Score: <span>0</span></p>
+                <div class="overlay-buttons">
+                    <button id="btn-restart" class="btn primary">Play Again</button>
+                    <button id="btn-shop" class="btn secondary">Shop</button>
+                </div>
+            </div>
+
+            <div id="shop-modal" class="modal hidden">
+                <div class="modal-content glass-panel">
+                    <button class="close-btn" id="btn-close-shop">&times;</button>
+                    <h2>Skin Shop</h2>
+                    <div class="shop-gems">Your Gems: <span id="shop-gem-count">0</span> 💎</div>
+                    <div class="skins-grid" id="skins-container">
+                        <!-- Skins populated by JS -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="{{ url_for('static', filename='js/game.js') }}"></script>
+</body>
+</html>

@@ -1,0 +1,26 @@
+# Nokia Snake Reimagined
+
+- [x] Environment Setup
+  - [x] Create `.venv`
+  - [x] Install packages
+- [x] Setup Flask Application
+  - [x] Create [app.py](file:///x:/PromptWar/app.py)
+  - [x] Set up `templates` and `static` directories
+- [x] Implement UI and Styles
+  - [x] Create [templates/index.html](file:///x:/PromptWar/templates/index.html) with Canvas and UI overlays
+  - [x] Create [static/css/style.css](file:///x:/PromptWar/static/css/style.css) with dark neon retro-modern themes
+- [x] Implement Game Engine ([static/js/game.js](file:///x:/PromptWar/static/js/game.js))
+  - [x] Core Game Loop & Movement
+  - [x] Nokia Boot Screen
+  - [x] Food & Power-up Spawning
+  - [x] Bomb System & Collisions
+  - [x] Combo & Scoring System
+  - [x] Gems & Shop Functionality
+  - [x] LocalStorage Persistence
+- [x] Testing and Verification
+  - [x] Run Flask server
+  - [x] Test all game features (power-ups, shop, bombs)
+- [x] Implement Server Profiles
+  - [x] Add SQLite database and API routes to [app.py](file:///x:/PromptWar/app.py)
+  - [x] Add Login Modal UI to [index.html](file:///x:/PromptWar/templates/index.html) & [style.css](file:///x:/PromptWar/static/css/style.css)
+  - [x] Refactor [game.js](file:///x:/PromptWar/static/js/game.js) to sync with backend instead of `localStorage`
