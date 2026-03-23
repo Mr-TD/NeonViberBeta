@@ -38,6 +38,25 @@ body {
     display: none !important;
 }
 
+/* Accessibility: Visually hide text but keep it available for screen readers */
+.sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+}
+
+/* Accessibility: Visible focus for keyboard navigation */
+:focus-visible {
+    outline: 3px solid var(--neon-green);
+    outline-offset: 4px;
+}
+
 /* Nokia Boot Screen */
 .nokia-boot {
     position: absolute;

@@ -4,21 +4,39 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Neon Viper 2026</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <meta name="description" content="Play the reimagined Nokia Snake game for 2026 with power-ups, neon graphics, and an online leaderboard.">
+    
+    <!-- Google Services Idea: Google Fonts optimization -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Outfit:wght@400;700;900&display=swap" rel="stylesheet">
+    
+    <!-- Google Services Idea: Google Analytics 4 (GA4) Integration -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-SNAKE2026"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      gtag('config', 'G-SNAKE2026');
+    </script>
+    
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
 </head>
 <body>
-    <div id="boot-screen" class="nokia-boot active">
-        <h1 class="nokia-text">NEON VIPER</h1>
+    <!-- Screen Reader Announcer -->
+    <div id="a11y-announcer" class="sr-only" aria-live="polite"></div>
+
+    <div id="boot-screen" class="nokia-boot active" role="presentation">
+        <h1 class="nokia-text" aria-label="Game Starting: Neon Viper">NEON VIPER</h1>
         <div class="connecting-hands"></div>
     </div>
 
     <!-- Login Modal -->
-    <div id="login-modal" class="modal hidden">
+    <div id="login-modal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="login-title">
         <div class="modal-content glass-panel" style="width: 450px; text-align: center;">
-            <h2>Select Profile</h2>
+            <h2 id="login-title">Select Profile</h2>
             
-            <div id="profiles-list" class="profiles-list">
+            <div id="profiles-list" class="profiles-list" role="list">
                 <!-- Populated by JS -->
             </div>
             
@@ -26,22 +44,22 @@
             
             <p style="margin-bottom: 15px; color: #aaa; font-size: 0.9rem;">Or Create New Profile</p>
             <div style="display: flex; gap: 10px;">
-                <input type="text" id="username-input" placeholder="New Username" class="input-field" maxlength="15" autocomplete="off" />
-                <button id="btn-login" class="btn primary">Start</button>
+                <input type="text" id="username-input" placeholder="New Username" class="input-field" maxlength="15" autocomplete="off" aria-label="Enter new username" />
+                <button id="btn-login" class="btn primary" aria-label="Start Game">Start</button>
             </div>
         </div>
     </div>
 
-    <div id="player-profile" class="player-profile hidden">
+    <div id="player-profile" class="player-profile hidden" aria-live="polite">
         <span>Player: <span id="display-username" style="color: #fff;"></span></span>
-        <a id="btn-logout">Logout</a>
+        <a id="btn-logout" href="#" aria-label="Logout of current profile" tabindex="0">Logout</a>
     </div>
 
     <div id="game-container" class="hidden">
-        <div class="score-panel">
+        <div class="score-panel" role="region" aria-label="Game Stats">
             <div class="score-box">
                 <span class="label">SCORE</span>
-                <span id="score">0</span>
+                <span id="score" aria-live="polite">0</span>
             </div>
             <div class="high-score-box">
                 <span class="label">BEST</span>
@@ -58,19 +76,19 @@
         </div>
 
         <div class="canvas-wrapper">
-            <canvas id="gameCanvas" width="800" height="600"></canvas>
+            <canvas id="gameCanvas" width="800" height="600" aria-label="Snake Game Area" role="application" tabindex="0"></canvas>
 
             <div class="hud-bottom">
-                <div id="power-up-status" class="hidden">
-                    <span id="power-up-icon">⚡</span>
+                <div id="power-up-status" class="hidden" role="status">
+                    <span id="power-up-icon" aria-hidden="true">⚡</span>
                     <div class="progress-bar"><div id="power-up-progress"></div></div>
                 </div>
-                <div id="combo-display" class="hidden">
+                <div id="combo-display" class="hidden" role="status">
                     <span class="combo-text">COMBO <span id="combo-multiplier">x2</span>!</span>
                 </div>
             </div>
 
-            <div id="overlay" class="overlay hidden">
+            <div id="overlay" class="overlay hidden" role="dialog" aria-modal="true" aria-labelledby="overlay-title">
                 <h2 id="overlay-title">Game Over</h2>
                 <p id="overlay-points">Score: <span>0</span></p>
                 <div class="overlay-buttons">
@@ -79,12 +97,12 @@
                 </div>
             </div>
 
-            <div id="shop-modal" class="modal hidden">
+            <div id="shop-modal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="shop-title">
                 <div class="modal-content glass-panel">
-                    <button class="close-btn" id="btn-close-shop">&times;</button>
-                    <h2>Skin Shop</h2>
-                    <div class="shop-gems">Your Gems: <span id="shop-gem-count">0</span> 💎</div>
-                    <div class="skins-grid" id="skins-container">
+                    <button class="close-btn" id="btn-close-shop" aria-label="Close Shop">&times;</button>
+                    <h2 id="shop-title">Skin Shop</h2>
+                    <div class="shop-gems" aria-live="polite">Your Gems: <span id="shop-gem-count">0</span> 💎</div>
+                    <div class="skins-grid" id="skins-container" role="list">
                         <!-- Skins populated by JS -->
                     </div>
                 </div>

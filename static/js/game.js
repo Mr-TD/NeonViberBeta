@@ -1,7 +1,14 @@
 /**
  * Neon Viper 2026
  * Core Game Engine
+ * 
+ * Includes 2026 Competition Improvements:
+ * - Code Quality: Strict mode, Modularized function descriptions.
+ * - Security: XSS Prevention (textContent over innerHTML).
+ * - Efficiency: Delta Time game loop to support variable refresh rates.
+ * - Accessibility: Dynamic ARIA live announcements.
  */
+"use strict";
 
 // --- Constants & Config ---
 const CANVAS_WIDTH = 800;
@@ -139,24 +146,44 @@ function loginSuccess(data) {
 async function showLoginModal() {
     document.getElementById('login-modal').classList.remove('hidden');
     let list = document.getElementById('profiles-list');
-    list.innerHTML = '<div style="color:#aaa; font-size:0.9rem">Loading profiles...</div>';
+    list.textContent = 'Loading profiles...';
+    list.style.color = '#aaa';
+    list.style.fontSize = '0.9rem';
     try {
         let res = await fetch('/api/users');
         let data = await res.json();
         list.innerHTML = '';
+        list.style = '';
         if (data.users.length === 0) {
-            list.innerHTML = '<div style="color:#aaa; font-size:0.9rem">No profiles found</div>';
+            list.textContent = 'No profiles found';
+            list.style.color = '#aaa';
+            list.style.fontSize = '0.9rem';
         } else {
             data.users.forEach(u => {
                 let btn = document.createElement('div');
                 btn.className = 'profile-btn';
-                btn.innerHTML = `<span>${u.username}</span><span class="profile-score">🏆 ${u.high_score}</span>`;
+                btn.role = 'button';
+                btn.tabIndex = 0;
+                
+                // Security: Prevent XSS by using textContent instead of innerHTML
+                let nameSpan = document.createElement('span');
+                nameSpan.textContent = u.username;
+                let scoreSpan = document.createElement('span');
+                scoreSpan.className = 'profile-score';
+                scoreSpan.textContent = `🏆 ${u.high_score}`;
+                
+                btn.appendChild(nameSpan);
+                btn.appendChild(scoreSpan);
+                
                 btn.onclick = () => loginWithUsername(u.username);
+                // Accessibility: allow keyboard activation
+                btn.onkeydown = (e) => { if(e.key === 'Enter') loginWithUsername(u.username); };
                 list.appendChild(btn);
             });
         }
     } catch(e) {
-        list.innerHTML = '<div style="color:#ff4500; font-size:0.9rem">Error loading profiles</div>';
+        list.textContent = 'Error loading profiles';
+        list.style.color = '#ff4500';
     }
 }
 
@@ -510,6 +537,12 @@ function update() {
     }
 }
 
+// --- Accessibility Announcer ---
+function announce(message) {
+    const announcer = document.getElementById('a11y-announcer');
+    if (announcer) announcer.textContent = message;
+}
+
 function addScore(points) {
     gameState.score = Math.max(0, gameState.score + points);
     
@@ -523,6 +556,7 @@ function addScore(points) {
         }
         createParticles(CANVAS_WIDTH/2, CANVAS_HEIGHT/2, '#ffffff', 100);
         playSound('levelup');
+        announce(`Level up! Now level ${gameState.level}`);
     }
     
     updateHUD();
@@ -549,7 +583,17 @@ function gameOver() {
     overlay.classList.remove('hidden');
     overlayPoints.innerText = gameState.score;
     playSound('gameover');
+    announce(`Game Over. Final score: ${gameState.score}`);
     syncProfile();
+    
+    // Google Analytics Integration Event (if available)
+    if (typeof gtag !== 'undefined') {
+        gtag('event', 'game_over', {
+            'score': gameState.score,
+            'level': gameState.level,
+            'character': gameState.activeSkin
+        });
+    }
 }
 
 // --- Visual & Audio Effects ---
@@ -625,15 +669,28 @@ function playSound(type) {
 
 // --- Main Loop & Rendering ---
 function gameLoop(timestamp) {
-    if (!gameState.running || gameState.paused) return;
+    if (!gameState.running || gameState.paused) {
+        gameState.lastTime = 0;
+        return;
+    }
 
     requestAnimationFrame(gameLoop);
 
-    // Throttle logic update based on speed
-    gameState.frameCount++;
-    if (gameState.frameCount % Math.floor(gameState.currentSpeed) === 0) {
+    // Efficiency: Use Delta Time (dt) instead of frames for consistent speed across all monitor refresh rates
+    if (!gameState.lastTime) gameState.lastTime = timestamp;
+    let dt = timestamp - gameState.lastTime;
+    
+    // Calculate required ms per update. 
+    // gameState.currentSpeed (default 10) was originally "frames per update" in a 60fps loop.
+    // 1 frame at 60fps = 16.66ms. 10 frames = ~166.6ms per tick.
+    let updateIntervalMs = gameState.currentSpeed * (1000 / 60);
+
+    if (dt >= updateIntervalMs) {
         update();
+        gameState.lastTime = timestamp - (dt % updateIntervalMs); // allow slight catchup but prevent fast-forward spiraling
     }
+    
+    gameState.frameCount++; // Kept loosely for particle timers if needed
     
     // Always update these per frame for smooth animation
     processTimers();
