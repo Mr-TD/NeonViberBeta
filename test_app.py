@@ -8,7 +8,7 @@ class NeonViperTestCase(unittest.TestCase):
     def setUp(self):
         # Configure app for testing
         app.config['TESTING'] = True
-        app.secret_key = 'test_secret'
+        app.secret_key = os.urandom(24)
         self.client = app.test_client()
         
         # Test DB Initialization
@@ -65,7 +65,7 @@ class NeonViperTestCase(unittest.TestCase):
         with self.client.session_transaction() as sess:
             sess['username'] = 'tester1'
             
-        rv = self.client.post('/api/buy', json={'skin_id': 'neon', 'cost': 50})
+        rv = self.client.post('/api/buy', json={'skin_id': 'neon'})
         self.assertEqual(rv.status_code, 200)
         data = json.loads(rv.data)
         self.assertEqual(data['gems'], 0)
@@ -75,8 +75,17 @@ class NeonViperTestCase(unittest.TestCase):
         with self.client.session_transaction() as sess:
             sess['username'] = 'tester1'
             
-        rv = self.client.post('/api/buy', json={'skin_id': 'lava', 'cost': 100})
+        rv = self.client.post('/api/buy', json={'skin_id': 'lava'})
         self.assertEqual(rv.status_code, 400)
+        
+    def test_gemini_comment(self):
+        # Tests the fallback behavior when API key is not present or mocked
+        rv = self.client.post('/api/comment', json={'event': 'game_over', 'score': 100, 'level': 2})
+        self.assertEqual(rv.status_code, 200)
+        data = json.loads(rv.data)
+        self.assertIn('comment', data)
+        self.assertTrue(isinstance(data['comment'], str))
+        self.assertTrue(len(data['comment']) > 0)
 
 if __name__ == '__main__':
     unittest.main()

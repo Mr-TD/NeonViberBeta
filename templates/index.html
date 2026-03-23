@@ -10,6 +10,8 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Outfit:wght@400;700;900&display=swap" rel="stylesheet">
+    <!-- Google Material Symbols -->
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet" />
     
     <!-- Google Services Idea: Google Analytics 4 (GA4) Integration -->
     <script async src="https://www.googletagmanager.com/gtag/js?id=G-SNAKE2026"></script>
@@ -23,6 +25,19 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
 </head>
 <body>
+    <!-- Google Translate Widget -->
+    <div id="google_translate_element" class="translate-widget"></div>
+    <script type="text/javascript">
+      function googleTranslateElementInit() {
+        new google.translate.TranslateElement({pageLanguage: 'en', layout: google.translate.TranslateElement.InlineLayout.SIMPLE}, 'google_translate_element');
+      }
+    </script>
+    <script type="text/javascript" src="https://translate.google.com/translate_a/element.js?cb=googleTranslateElementInit"></script>
+
+    <!-- YouTube IFrame Player API -->
+    <script src="https://www.youtube.com/iframe_api"></script>
+    <div id="yt-player" class="hidden"></div>
+
     <!-- Screen Reader Announcer -->
     <div id="a11y-announcer" class="sr-only" aria-live="polite"></div>
 
@@ -70,7 +85,7 @@
                 <span id="level">1</span>
             </div>
             <div class="gems-box">
-                <span class="label">💎 GEMS</span>
+                <span class="label"><span class="material-symbols-outlined" style="font-size: 0.9em; vertical-align: middle; padding-bottom: 2px;">diamond</span> GEMS</span>
                 <span id="gems">0</span>
             </div>
         </div>
@@ -78,9 +93,23 @@
         <div class="canvas-wrapper">
             <canvas id="gameCanvas" width="800" height="600" aria-label="Snake Game Area" role="application" tabindex="0"></canvas>
 
+            <!-- AI Comm-Link -->
+            <div id="ai-comm-link" class="hidden" role="status" aria-live="polite">
+                <div class="comm-avatar"><span class="material-symbols-outlined" aria-hidden="true">smart_toy</span></div>
+                <div class="comm-text-area">
+                    <span class="comm-label">AI COACH</span>
+                    <div id="ai-text">Analyzing...</div>
+                </div>
+            </div>
+
+            <!-- Music Toggle UI -->
+            <button id="btn-music" class="music-toggle" aria-label="Toggle Music" title="Synthwave Radio">
+                <span class="material-symbols-outlined" id="music-icon">volume_off</span>
+            </button>
+
             <div class="hud-bottom">
                 <div id="power-up-status" class="hidden" role="status">
-                    <span id="power-up-icon" aria-hidden="true">⚡</span>
+                    <span id="power-up-icon" class="material-symbols-outlined" style="font-size: 1.5rem;" aria-hidden="true">bolt</span>
                     <div class="progress-bar"><div id="power-up-progress"></div></div>
                 </div>
                 <div id="combo-display" class="hidden" role="status">
@@ -101,7 +130,7 @@
                 <div class="modal-content glass-panel">
                     <button class="close-btn" id="btn-close-shop" aria-label="Close Shop">&times;</button>
                     <h2 id="shop-title">Skin Shop</h2>
-                    <div class="shop-gems" aria-live="polite">Your Gems: <span id="shop-gem-count">0</span> 💎</div>
+                    <div class="shop-gems" aria-live="polite">Your Gems: <span id="shop-gem-count">0</span> <span class="material-symbols-outlined" style="font-size:inherit; vertical-align: middle;">diamond</span></div>
                     <div class="skins-grid" id="skins-container" role="list">
                         <!-- Skins populated by JS -->
                     </div>

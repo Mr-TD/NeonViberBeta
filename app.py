@@ -4,14 +4,25 @@ import json
 import logging
 import re
 from flask import Flask, render_template, request, jsonify, session, make_response
+try:
+    from google import genai
+    from google.genai import types
+except ImportError:
+    genai = None
+    types = None
 
 # Configure Logging for better Code Quality
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
 
 app = Flask(__name__)
-# Security: Use environment variable for secret key in production, fallback for development.
-app.secret_key = os.getenv('SECRET_KEY', 'snake_secret_key_2026_dev')
+# Security: Use environment variable for secret key, fallback to random bytes.
+app.secret_key = os.getenv('SECRET_KEY', os.urandom(24))
+
+# Security: Session Cookie Hardening
+app.config['SESSION_COOKIE_HTTPONLY'] = True
+app.config['SESSION_COOKIE_SECURE'] = os.getenv('FLASK_ENV') == 'production'
+app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
 DB_FILE = 'game.db'
 
 # Security: Content Security Policy & Security Headers
@@ -20,7 +31,18 @@ def set_security_headers(response):
     response.headers['X-Frame-Options'] = 'SAMEORIGIN'
     response.headers['X-Content-Type-Options'] = 'nosniff'
     response.headers['Strict-Transport-Security'] = 'max-age=31536000; includeSubDomains'
+    response.headers['Content-Security-Policy'] = "default-src 'self'; script-src 'self' 'unsafe-inline' https://www.googletagmanager.com https://translate.google.com https://translate.googleapis.com https://www.youtube.com https://s.ytimg.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://translate.googleapis.com; font-src 'self' https://fonts.gstatic.com; frame-src https://www.youtube.com; img-src 'self' data: https://www.googletagmanager.com https://translate.googleapis.com https://translate.google.com;"
     return response
+
+# Server-side definition of skin costs
+SKIN_COSTS = {
+    'classic': 0,
+    'neon': 50,
+    'lava': 100,
+    'ocean': 100,
+    'galaxy': 200,
+    'rainbow': 300
+}
 
 def init_db():
     try:
@@ -152,21 +174,18 @@ def buy():
     username = session['username']
     skin_id = data.get('skin_id')
     
-    try:
-        cost = int(data.get('cost', 0))
-    except (ValueError, TypeError):
-        return jsonify({'error': 'Invalid cost parameter'}), 400
-
-    if not skin_id or not isinstance(skin_id, str):
+    if not skin_id or not isinstance(skin_id, str) or skin_id not in SKIN_COSTS:
         return jsonify({'error': 'Invalid skin ID'}), 400
+
+    actual_cost = SKIN_COSTS[str(skin_id)]
 
     try:
         with sqlite3.connect(DB_FILE) as conn:
             c = conn.cursor()
             c.execute('SELECT gems, unlocked_skins FROM users WHERE username=?', (username,))
             row = c.fetchone()
-            if row and row[0] >= cost:
-                gems = row[0] - cost
+            if row and row[0] >= actual_cost:
+                gems = row[0] - actual_cost
                 unlocked = json.loads(row[1])
                 if skin_id not in unlocked:
                     unlocked.append(skin_id)
@@ -212,6 +231,35 @@ def equip():
         logger.error(f"Error equipping skin: {e}")
         return jsonify({'error': 'Internal server error'}), 500
 
+@app.route('/api/comment', methods=['POST'])
+def gemini_comment():
+    data = request.json or {}
+    event_type = data.get('event', 'game_over')
+    score = data.get('score', 0)
+    level = data.get('level', 1)
+    
+    try:
+        if not genai:
+            raise ImportError("google.genai is not installed")
+        
+        client = genai.Client() # Assumes GEMINI_API_KEY is in environment
+        prompt = f"Act as a snarky, futuristic AI coach observing a player playing a 2026 neon snake game. " \
+                 f"Event: {event_type}. Score: {score}. Level: {level}. " \
+                 f"Keep the response to ONE short, punchy sentence. Max 15 words. No markdown formatting."
+        
+        # Efficiency: Use gemini-2.5-flash for maximum generation speed
+        response = client.models.generate_content(
+            model='gemini-2.5-flash',
+            contents=prompt,
+        )
+        # Clean text in case models add quotes
+        text = response.text.strip().replace('"', '').replace('\n', ' ')
+        return jsonify({'comment': text})
+    except Exception as e:
+        logger.error(f"Gemini API Error: {e}")
+        return jsonify({'comment': "Connection to AI Coach lost. Stay sharp, Viper."})
+
 if __name__ == '__main__':
     init_db()
-    app.run(debug=True, port=5000)
+    debug_mode = os.getenv('FLASK_ENV', 'development') == 'development'
+    app.run(debug=debug_mode, port=5000)

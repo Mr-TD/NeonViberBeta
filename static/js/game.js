@@ -18,11 +18,11 @@ const COLS = CANVAS_WIDTH / GRID_SIZE;
 const ROWS = CANVAS_HEIGHT / GRID_SIZE;
 
 const POWER_TYPES = {
-    FIRE: { id: 'fire', icon: '🔥', duration: 8000, color: '#ff4500' },
-    ICE: { id: 'ice', icon: '🧊', duration: 8000, color: '#00ffff' },
-    SPEED: { id: 'speed', icon: '⚡', duration: 6000, color: '#ffff00' },
-    SHIELD: { id: 'shield', icon: '🛡️', duration: 8000, color: '#ff00ff' },
-    GHOST: { id: 'ghost', icon: '👻', duration: 8000, color: '#ffffff' }
+    FIRE: { id: 'fire', icon: 'local_fire_department', duration: 8000, color: '#ff4500' },
+    ICE: { id: 'ice', icon: 'ac_unit', duration: 8000, color: '#00ffff' },
+    SPEED: { id: 'speed', icon: 'bolt', duration: 6000, color: '#ffff00' },
+    SHIELD: { id: 'shield', icon: 'security', duration: 8000, color: '#ff00ff' },
+    GHOST: { id: 'ghost', icon: 'visibility_off', duration: 8000, color: '#ffffff' }
 };
 
 const SKINS = [
@@ -93,6 +93,47 @@ const btnCloseShop = document.getElementById('btn-close-shop');
 const shopModal = document.getElementById('shop-modal');
 const shopGems = document.getElementById('shop-gem-count');
 const skinsContainer = document.getElementById('skins-container');
+
+let ytPlayer;
+let isMusicPlaying = false;
+
+window.onYouTubeIframeAPIReady = function() {
+    ytPlayer = new YT.Player('yt-player', {
+        height: '0',
+        width: '0',
+        videoId: '4xDzrDK2bM4', // Synthwave mix
+        playerVars: {
+            'autoplay': 0, // Requires interaction to play
+            'controls': 0,
+            'showinfo': 0,
+            'rel': 0,
+            'loop': 1,
+            'playlist': '4xDzrDK2bM4'
+        },
+        events: {
+            'onReady': onPlayerReady
+        }
+    });
+};
+
+function onPlayerReady(event) {
+    event.target.setVolume(20);
+    document.getElementById('btn-music').addEventListener('click', toggleMusic);
+}
+
+function toggleMusic() {
+    if (!ytPlayer) return;
+    const icon = document.getElementById('music-icon');
+    if (isMusicPlaying) {
+        ytPlayer.pauseVideo();
+        icon.innerText = 'volume_off';
+        isMusicPlaying = false;
+    } else {
+        ytPlayer.playVideo();
+        icon.innerText = 'volume_up';
+        isMusicPlaying = true;
+    }
+}
 
 // --- Initialization ---
 async function init() {
@@ -168,9 +209,20 @@ async function showLoginModal() {
                 // Security: Prevent XSS by using textContent instead of innerHTML
                 let nameSpan = document.createElement('span');
                 nameSpan.textContent = u.username;
+                
                 let scoreSpan = document.createElement('span');
                 scoreSpan.className = 'profile-score';
-                scoreSpan.textContent = `🏆 ${u.high_score}`;
+                
+                let iconSpan = document.createElement('span');
+                iconSpan.className = 'material-symbols-outlined';
+                iconSpan.style = 'font-size: 1.2em; vertical-align: middle; margin-right: 4px;';
+                iconSpan.textContent = 'emoji_events';
+                
+                let txtSpan = document.createElement('span');
+                txtSpan.textContent = u.high_score;
+                
+                scoreSpan.appendChild(iconSpan);
+                scoreSpan.appendChild(txtSpan);
                 
                 btn.appendChild(nameSpan);
                 btn.appendChild(scoreSpan);
@@ -557,6 +609,9 @@ function addScore(points) {
         createParticles(CANVAS_WIDTH/2, CANVAS_HEIGHT/2, '#ffffff', 100);
         playSound('levelup');
         announce(`Level up! Now level ${gameState.level}`);
+        
+        // AI Commentator: Level Up
+        requestAIComment('level_up', gameState.score, gameState.level);
     }
     
     updateHUD();
@@ -585,6 +640,9 @@ function gameOver() {
     playSound('gameover');
     announce(`Game Over. Final score: ${gameState.score}`);
     syncProfile();
+    
+    // AI Commentator: Game Over
+    requestAIComment('game_over', gameState.score, gameState.level);
     
     // Google Analytics Integration Event (if available)
     if (typeof gtag !== 'undefined') {
@@ -665,6 +723,62 @@ function playSound(type) {
             osc.stop(actx.currentTime + 0.2);
         }
     } catch(e) {}
+}
+
+// --- AI Commentator System ---
+async function requestAIComment(event_type, score, level) {
+    const commLink = document.getElementById('ai-comm-link');
+    if (!commLink) return;
+    const aiText = document.getElementById('ai-text');
+    
+    // Show UI with "Analyzing..."
+    commLink.classList.remove('hidden');
+    aiText.textContent = "Analyzing...";
+    aiText.classList.remove('typing-cursor');
+    announce("AI Coach is analyzing performance.");
+    
+    try {
+        let res = await fetch('/api/comment', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({event: event_type, score: score, level: level})
+        });
+        if (res.ok) {
+            let data = await res.json();
+            typeText(aiText, data.comment, 30);
+            announce("AI Coach says: " + data.comment);
+        } else {
+            typeText(aiText, "Signal lost. Keep moving.", 30);
+        }
+    } catch(e) {
+        typeText(aiText, "Comm-link offline.", 30);
+    }
+}
+
+function typeText(element, text, speed) {
+    element.textContent = '';
+    element.classList.add('typing-cursor');
+    let i = 0;
+    
+    // Store current typing text to avoid multiple timeouts overlapping if called rapidly
+    element.dataset.typingText = text;
+    
+    function typeChar() {
+        if (element.dataset.typingText !== text) return; // aborted by new text
+        if (i < text.length) {
+            element.textContent += text.charAt(i);
+            i++;
+            setTimeout(typeChar, speed);
+        } else {
+            element.classList.remove('typing-cursor');
+            setTimeout(() => {
+                if (element.dataset.typingText === text) {
+                    document.getElementById('ai-comm-link').classList.add('hidden');
+                }
+            }, 5000); // hide after 5 seconds
+        }
+    }
+    typeChar();
 }
 
 // --- Main Loop & Rendering ---
